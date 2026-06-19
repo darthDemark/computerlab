@@ -134,6 +134,146 @@ export const CHALLENGES: Challenge[] = [
       { description: "countVowels('xyz') === 0", args: ["xyz"], expected: 0 },
     ],
   },
+
+  // ---- Level 2 · Programming Logic / Recursion ----------------------------
+  {
+    id: "ch-factorial",
+    title: "Factorial (Recursion)",
+    difficulty: "Beginner",
+    levelId: 2,
+    functionName: "factorial",
+    prompt:
+      "Implement `factorial(n)` recursively: n! = n × (n-1) × … × 1, with factorial(0) === 1.",
+    rules: [
+      "Define a function named `factorial`.",
+      "Use recursion with a base case.",
+      "factorial(0) must return 1.",
+    ],
+    starterCode: `function factorial(n) {
+  // base case + recursive case
+}`,
+    tests: [
+      { description: "factorial(0) === 1", args: [0], expected: 1 },
+      { description: "factorial(5) === 120", args: [5], expected: 120 },
+      { description: "factorial(7) === 5040", args: [7], expected: 5040 },
+    ],
+  },
+  {
+    id: "ch-sum-nested",
+    title: "Sum Nested Array (Recursion)",
+    difficulty: "Intermediate",
+    levelId: 2,
+    functionName: "sumNested",
+    prompt:
+      "Implement `sumNested(arr)` that sums an arbitrarily nested array of numbers, e.g. [1,[2,[3,4]],5] → 15.",
+    rules: [
+      "Define a function named `sumNested`.",
+      "Recurse into nested arrays.",
+      "Return the total sum as a number.",
+    ],
+    starterCode: `function sumNested(arr) {
+  // recurse when an element is itself an array
+}`,
+    tests: [
+      { description: "sumNested([1,2,3]) === 6", args: [[1, 2, 3]], expected: 6 },
+      { description: "sumNested([1,[2,[3,4]],5]) === 15", args: [[1, [2, [3, 4]], 5]], expected: 15 },
+      { description: "sumNested([]) === 0", args: [[]], expected: 0 },
+    ],
+  },
+
+  // ---- Level 4 · Data Structures ------------------------------------------
+  {
+    id: "ch-two-sum",
+    title: "Two Sum (Hash Map)",
+    difficulty: "Intermediate",
+    levelId: 4,
+    functionName: "twoSum",
+    prompt:
+      "Implement `twoSum(nums, target)` returning the indices of the two numbers that add up to target. Aim for O(n) using a hash map.",
+    rules: [
+      "Define a function named `twoSum`.",
+      "Return an array of two indices [i, j] with i < j.",
+      "Assume exactly one solution exists.",
+    ],
+    starterCode: `function twoSum(nums, target) {
+  // map value -> index for O(n)
+}`,
+    tests: [
+      { description: "twoSum([2,7,11,15], 9) -> [0,1]", args: [[2, 7, 11, 15], 9], expected: [0, 1] },
+      { description: "twoSum([3,2,4], 6) -> [1,2]", args: [[3, 2, 4], 6], expected: [1, 2] },
+      { description: "twoSum([1,5,3], 8) -> [1,2]", args: [[1, 5, 3], 8], expected: [1, 2] },
+    ],
+  },
+  {
+    id: "ch-balanced-brackets",
+    title: "Balanced Brackets (Stack)",
+    difficulty: "Intermediate",
+    levelId: 4,
+    functionName: "isBalanced",
+    prompt:
+      "Implement `isBalanced(str)` returning true if every bracket (), [], {} is correctly opened and closed in order.",
+    rules: [
+      "Define a function named `isBalanced`.",
+      "Use a stack to match opening and closing brackets.",
+      "Return a boolean.",
+    ],
+    starterCode: `function isBalanced(str) {
+  // push opens, pop and verify on closes
+}`,
+    tests: [
+      { description: "isBalanced('([]{})') === true", args: ["([]{})"], expected: true },
+      { description: "isBalanced('([)]') === false", args: ["([)]"], expected: false },
+      { description: "isBalanced('(((') === false", args: ["((("], expected: false },
+    ],
+  },
+
+  // ---- Level 5 · Algorithms -----------------------------------------------
+  {
+    id: "ch-binary-search",
+    title: "Binary Search",
+    difficulty: "Intermediate",
+    levelId: 5,
+    functionName: "binarySearch",
+    prompt:
+      "Implement `binarySearch(arr, target)` on a sorted array, returning the index of target or -1. Must run in O(log n).",
+    rules: [
+      "Define a function named `binarySearch`.",
+      "Assume `arr` is sorted ascending.",
+      "Return the index, or -1 if not present.",
+    ],
+    starterCode: `function binarySearch(arr, target) {
+  let low = 0, high = arr.length - 1;
+  // halve the search space each step
+}`,
+    tests: [
+      { description: "found in middle", args: [[1, 3, 5, 7, 9, 11, 13], 7], expected: 3 },
+      { description: "found at end", args: [[1, 3, 5, 7, 9], 9], expected: 4 },
+      { description: "not present -> -1", args: [[1, 3, 5, 7, 9], 8], expected: -1 },
+    ],
+  },
+  {
+    id: "ch-merge-sort",
+    title: "Merge Sort",
+    difficulty: "Advanced",
+    levelId: 5,
+    functionName: "mergeSort",
+    prompt:
+      "Implement `mergeSort(arr)` returning a new sorted array using the divide-and-conquer merge sort algorithm.",
+    rules: [
+      "Define a function named `mergeSort`.",
+      "Split, recursively sort, then merge.",
+      "Return a new ascending-sorted array.",
+    ],
+    starterCode: `function mergeSort(arr) {
+  if (arr.length <= 1) return arr;
+  // split, recurse, merge
+}`,
+    tests: [
+      { description: "sorts unordered", args: [[5, 2, 9, 1, 5, 6]], expected: [1, 2, 5, 5, 6, 9] },
+      { description: "already sorted", args: [[1, 2, 3]], expected: [1, 2, 3] },
+      { description: "single element", args: [[42]], expected: [42] },
+    ],
+  },
 ];
 
 export function getChallengeById(id: string): Challenge | undefined {

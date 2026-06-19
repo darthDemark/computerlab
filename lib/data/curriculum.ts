@@ -1,10 +1,20 @@
 import type { Level, Lesson } from "@/lib/types";
+import { DEEP_TOPICS, getDeepTopic } from "./deepContent";
 
 /**
- * Curriculum content. Levels 0 and 1 carry full lesson bodies.
- * Higher levels are scaffolded with module outlines so the map renders
- * the full 0–8 doctorate-track progression.
+ * Curriculum content. The full path runs from Level 0 (Computer Literacy) to
+ * Level 9 (Research / Doctorate Track). Levels 0 and 1 carry full lesson
+ * bodies; eleven core CS topics carry deep 7-part content (see deepContent.ts);
+ * remaining modules are seeded with structured outlines that the AI Tutor can
+ * expand on demand.
  */
+
+/** Pull a deep-dive topic by id, failing loudly if the id is wrong. */
+function deep(id: string): Lesson {
+  const topic = getDeepTopic(id);
+  if (!topic) throw new Error(`Missing deep topic: ${id}`);
+  return topic;
+}
 
 const level0Lessons: Lesson[] = [
   {
@@ -488,18 +498,43 @@ Given \`TypeError: Cannot read properties of undefined (reading 'name')\`, name 
   },
 ];
 
-function outlineLessons(levelId: number, titles: string[]): Lesson[] {
+function slug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+/**
+ * Seed an outline lesson for modules that do not yet carry a full body.
+ * The body is intentionally substantive — orientation, what you will learn,
+ * and a direct path to expand it live with ARCHITECT — so the academy never
+ * shows an empty "coming soon" page.
+ */
+function outlineLessons(levelId: number, theme: string, titles: string[]): Lesson[] {
   return titles.map((title) => ({
-    id: `l${levelId}-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`,
+    id: `l${levelId}-${slug(title)}`,
     levelId,
     title,
-    summary: "Module outline — full content arrives in a later content drop.",
+    summary: `${theme} · ${title}.`,
     estMinutes: 20,
     keyPoints: [
-      "This module is part of the doctorate-track progression.",
-      "Use ARCHITECT (AI Tutor) to explore the topic in depth right now.",
+      `${title} is a core module of Level ${levelId}: ${theme}.`,
+      "Open ARCHITECT to get a full definition, examples, analogy, and challenge.",
+      "Complete the level quiz and a challenge to clear the mastery checkpoint.",
     ],
-    body: `## ${title}\n\nThis module is part of **Level ${levelId}** of the CS LAB doctorate track. The structured lesson body is scheduled for a future content drop.\n\nIn the meantime, open the **AI Tutor (ARCHITECT)** and ask it to teach you *"${title}"* — it will return a definition, examples, an analogy, common mistakes, and a mini challenge tailored to your level.`,
+    body: `## ${title}
+
+**${title}** is part of **Level ${levelId} — ${theme}**. This module is seeded as a structured outline; the deep written lesson is being rolled out across the curriculum.
+
+### What this module covers
+- The core definition and mental model of ${title.toLowerCase()}.
+- A worked JavaScript or pseudocode example.
+- Where ${title.toLowerCase()} appears in real engineering systems.
+- The common mistakes and how to avoid them.
+
+### Study it now
+Open the **AI Tutor (ARCHITECT)** and ask: *"Teach me ${title} as part of ${theme}. Give me a definition, a code example, a real-world use case, common mistakes, and a practice challenge."* ARCHITECT responds with rigorous, senior-engineer-level depth tailored to where you are in the track.`,
   }));
 }
 
@@ -509,114 +544,177 @@ export const CURRICULUM: Level[] = [
     code: "L0",
     title: "Computer Literacy",
     description: "The machine, the filesystem, the terminal, the network, and version control.",
+    outcome: "Operate a computer like an engineer: navigate the shell, the web model, and Git.",
     lessons: level0Lessons,
   },
   {
     id: 1,
     code: "L1",
     title: "JavaScript Foundations",
-    description: "Variables, types, functions, control flow, and the debugging mindset.",
-    lessons: level1Lessons,
+    description: "Variables, types, functions, control flow, scope, closures, errors, and debugging.",
+    outcome: "Write, reason about, and debug real JavaScript programs from scratch.",
+    lessons: [
+      ...level1Lessons.slice(0, 7),
+      ...outlineLessons(1, "JavaScript Foundations", ["Scope", "Closures", "Error Handling"]),
+      level1Lessons[7],
+    ],
   },
   {
     id: 2,
     code: "L2",
-    title: "Modern JavaScript",
-    description: "ES2015+, scope & closures, async/await, modules, and the event loop.",
-    lessons: outlineLessons(2, [
-      "Scope and Closures",
-      "Higher-Order Functions",
-      "Promises",
-      "Async / Await",
-      "Modules",
-      "The Event Loop",
-    ]),
+    title: "Programming Logic",
+    description: "Boolean logic, truth tables, control flow, recursion, and problem decomposition.",
+    outcome: "Decompose any problem into precise, testable logical steps.",
+    lessons: [
+      ...outlineLessons(2, "Programming Logic", ["Boolean Logic", "Truth Tables", "Control Flow"]),
+      deep("l2-recursion"),
+      ...outlineLessons(2, "Programming Logic", [
+        "Problem Decomposition",
+        "Pseudocode",
+        "Pattern Recognition",
+      ]),
+    ],
   },
   {
     id: 3,
     code: "L3",
-    title: "TypeScript & Engineering",
-    description: "Static types, generics, tooling, testing, and clean architecture.",
-    lessons: outlineLessons(3, [
-      "Type Annotations",
-      "Interfaces and Types",
-      "Generics",
-      "Tooling and Configuration",
-      "Unit Testing",
-      "Clean Architecture",
-    ]),
+    title: "Big O & Complexity",
+    description: "Asymptotic analysis from O(1) to O(n²), time vs space, and complexity drills.",
+    outcome: "Analyze and compare the time and space complexity of any algorithm.",
+    lessons: [
+      deep("l3-big-o"),
+      ...outlineLessons(3, "Big O & Complexity", [
+        "O(1) — Constant Time",
+        "O(log n) — Logarithmic Time",
+        "O(n) — Linear Time",
+        "O(n log n) — Linearithmic Time",
+        "O(n²) — Quadratic Time",
+        "Time Complexity",
+        "Space Complexity",
+        "Complexity Comparison Drills",
+      ]),
+    ],
   },
   {
     id: 4,
     code: "L4",
     title: "Data Structures",
-    description: "Arrays, linked lists, stacks, queues, trees, graphs, and hash tables.",
-    lessons: outlineLessons(4, [
-      "Linked Lists",
-      "Stacks and Queues",
-      "Hash Tables",
-      "Trees",
-      "Heaps",
-      "Graphs",
-    ]),
+    description: "Arrays, strings, hash maps, sets, stacks, queues, lists, trees, graphs, and tries.",
+    outcome: "Choose and implement the right data structure for any problem.",
+    lessons: [
+      deep("l4-arrays"),
+      ...outlineLessons(4, "Data Structures", ["Strings"]),
+      deep("l4-hash-maps"),
+      ...outlineLessons(4, "Data Structures", ["Sets"]),
+      deep("l4-stacks"),
+      deep("l4-queues"),
+      deep("l4-linked-lists"),
+      deep("l4-trees"),
+      ...outlineLessons(4, "Data Structures", ["Binary Search Trees", "Heaps"]),
+      deep("l4-graphs"),
+      ...outlineLessons(4, "Data Structures", ["Tries"]),
+    ],
   },
   {
     id: 5,
     code: "L5",
     title: "Algorithms",
-    description: "Complexity analysis, sorting, searching, recursion, DP, and graph algorithms.",
-    lessons: outlineLessons(5, [
-      "Big-O Notation",
-      "Sorting Algorithms",
-      "Binary Search",
-      "Recursion and Backtracking",
-      "Dynamic Programming",
-      "Graph Algorithms",
-    ]),
+    description: "Searching, sorting, recursion, two pointers, sliding window, BFS/DFS, and DP.",
+    outcome: "Design and analyze efficient algorithms and recognize the classic patterns.",
+    lessons: [
+      ...outlineLessons(5, "Algorithms", ["Linear Search"]),
+      deep("l5-binary-search"),
+      deep("l5-sorting"),
+      ...outlineLessons(5, "Algorithms", [
+        "Bubble Sort",
+        "Selection Sort",
+        "Insertion Sort",
+        "Merge Sort",
+        "Quick Sort",
+        "Recursion Algorithms",
+        "Two Pointers",
+        "Sliding Window",
+        "Depth-First Search",
+        "Breadth-First Search",
+        "Dynamic Programming Basics",
+      ]),
+    ],
   },
   {
     id: 6,
     code: "L6",
-    title: "Computer Science Core",
-    description: "Architecture, operating systems, networking, databases, and compilers.",
-    lessons: outlineLessons(6, [
-      "Computer Architecture",
-      "Operating Systems",
-      "Networking",
+    title: "Software Engineering",
+    description: "TypeScript, testing, clean code, Git workflows, APIs, REST, auth, DBs, system design.",
+    outcome: "Ship maintainable, tested, well-architected software in a team.",
+    lessons: outlineLessons(6, "Software Engineering", [
+      "TypeScript",
+      "Testing",
+      "Clean Code",
+      "Git Workflows",
+      "APIs",
+      "REST",
+      "Authentication",
       "Databases",
-      "Compilers",
-      "Concurrency",
+      "System Design Basics",
     ]),
   },
   {
     id: 7,
     code: "L7",
-    title: "Advanced Systems",
-    description: "Distributed systems, scalability, consensus, and fault tolerance.",
-    lessons: outlineLessons(7, [
-      "Distributed Systems",
-      "Consensus Protocols",
-      "Scalability Patterns",
-      "Caching and CDNs",
-      "Message Queues",
-      "Fault Tolerance",
+    title: "Computer Science Core",
+    description: "Discrete math, logic, set theory, graph theory, OS, networking, DBs, compilers, PLs.",
+    outcome: "Reason about computing from mathematical foundations up to systems.",
+    lessons: outlineLessons(7, "Computer Science Core", [
+      "Discrete Math",
+      "Logic",
+      "Set Theory",
+      "Graph Theory",
+      "Operating Systems",
+      "Networking",
+      "Databases",
+      "Compilers",
+      "Programming Languages",
     ]),
   },
   {
     id: 8,
     code: "L8",
-    title: "Research",
-    description: "Reading papers, formal methods, and original contribution to the field.",
-    lessons: outlineLessons(8, [
+    title: "Advanced Systems",
+    description: "Distributed systems, caching, queues, load balancing, concurrency, security, scale.",
+    outcome: "Design systems that stay correct, fast, and available at massive scale.",
+    lessons: outlineLessons(8, "Advanced Systems", [
+      "Distributed Systems",
+      "Caching",
+      "Queues",
+      "Load Balancing",
+      "Concurrency",
+      "Security",
+      "Scalability",
+      "Cloud Architecture",
+    ]),
+  },
+  {
+    id: 9,
+    code: "L9",
+    title: "Research / Doctorate Track",
+    description: "Reading papers, complexity theory, advanced algorithms, PL theory, ML theory, formal methods.",
+    outcome: "Read the frontier, reason with formal methods, and produce original research.",
+    lessons: outlineLessons(9, "Research / Doctorate Track", [
       "Reading Research Papers",
+      "Complexity Theory",
+      "Advanced Algorithms",
+      "Programming Language Theory",
+      "Compiler Design",
+      "Distributed Systems Research",
+      "Machine Learning Theory",
       "Formal Methods",
-      "Theory of Computation",
-      "Open Problems",
-      "Writing a Paper",
-      "Peer Review",
+      "Original Research Project",
     ]),
   },
 ];
+
+// Expose the deep topics for tooling/tests; they are already embedded above.
+export { DEEP_TOPICS };
 
 export const ALL_LESSONS: Lesson[] = CURRICULUM.flatMap((l) => l.lessons);
 

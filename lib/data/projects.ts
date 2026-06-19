@@ -5,6 +5,7 @@ export const PROJECTS: Project[] = [
     id: "calculator",
     title: "Calculator",
     difficulty: "Beginner",
+    levelId: 1,
     blurb: "A four-function calculator with a clean keypad UI and keyboard support.",
     skills: ["DOM events", "State", "Functions", "Operator precedence"],
     requirements: [
@@ -18,6 +19,7 @@ export const PROJECTS: Project[] = [
     id: "guessing-game",
     title: "Number Guessing Game",
     difficulty: "Beginner",
+    levelId: 1,
     blurb: "Guess the secret number with higher/lower feedback and an attempt counter.",
     skills: ["Conditionals", "Loops", "Random", "State"],
     requirements: [
@@ -31,6 +33,7 @@ export const PROJECTS: Project[] = [
     id: "todo",
     title: "Todo App",
     difficulty: "Beginner",
+    levelId: 1,
     blurb: "Create, complete, filter, and persist tasks across reloads.",
     skills: ["Arrays", "localStorage", "Rendering", "Filtering"],
     requirements: [
@@ -44,6 +47,7 @@ export const PROJECTS: Project[] = [
     id: "quiz",
     title: "Quiz App",
     difficulty: "Intermediate",
+    levelId: 2,
     blurb: "A multiple-choice quiz with scoring, progress, and a results screen.",
     skills: ["Data modeling", "State machines", "Scoring", "Rendering"],
     requirements: [
@@ -57,6 +61,7 @@ export const PROJECTS: Project[] = [
     id: "weather",
     title: "Weather App",
     difficulty: "Intermediate",
+    levelId: 6,
     blurb: "Fetch and display live weather for a searched city using a public API.",
     skills: ["fetch", "async/await", "APIs", "Error handling"],
     requirements: [
@@ -70,6 +75,7 @@ export const PROJECTS: Project[] = [
     id: "playlist",
     title: "Music Playlist App",
     difficulty: "Intermediate",
+    levelId: 4,
     blurb: "Build a queue with add, remove, reorder, and now-playing state.",
     skills: ["Arrays", "Immutable updates", "Sorting", "UI state"],
     requirements: [
@@ -83,6 +89,7 @@ export const PROJECTS: Project[] = [
     id: "notes",
     title: "Notes App",
     difficulty: "Intermediate",
+    levelId: 4,
     blurb: "A markdown-capable notes app with search and autosave.",
     skills: ["CRUD", "Debouncing", "Search", "localStorage"],
     requirements: [
@@ -96,6 +103,7 @@ export const PROJECTS: Project[] = [
     id: "rest-api",
     title: "REST API",
     difficulty: "Advanced",
+    levelId: 6,
     blurb: "Design and build a CRUD REST API with proper status codes and validation.",
     skills: ["HTTP", "Routing", "Validation", "Status codes"],
     requirements: [
@@ -109,6 +117,7 @@ export const PROJECTS: Project[] = [
     id: "learning-tracker",
     title: "Learning Tracker",
     difficulty: "Advanced",
+    levelId: 5,
     blurb: "Model goals, sessions, and streaks — then visualize progress over time.",
     skills: ["Data modeling", "Date math", "Aggregation", "Charts"],
     requirements: [
@@ -116,6 +125,76 @@ export const PROJECTS: Project[] = [
       "Compute streaks and totals.",
       "Visualize progress over time.",
       "Persist all data locally.",
+    ],
+  },
+  {
+    id: "complexity-visualizer",
+    title: "Complexity Visualizer",
+    difficulty: "Intermediate",
+    levelId: 3,
+    blurb: "Plot operation counts of O(1), O(log n), O(n), O(n log n), and O(n²) as input grows.",
+    skills: ["Big O", "Measurement", "Charts", "Analysis"],
+    requirements: [
+      "Run instrumented functions for each complexity class.",
+      "Count operations as input size scales.",
+      "Plot the growth curves side by side.",
+      "Let the user adjust the maximum n.",
+    ],
+  },
+  {
+    id: "ds-visualizer",
+    title: "Data Structure Visualizer",
+    difficulty: "Advanced",
+    levelId: 4,
+    blurb: "Interactively build and animate a stack, queue, linked list, and binary search tree.",
+    skills: ["Data structures", "Pointers", "Rendering", "Animation"],
+    requirements: [
+      "Implement stack, queue, linked list, and BST.",
+      "Animate insert, delete, and search operations.",
+      "Show the Big O of each operation live.",
+      "Support reset and random fill.",
+    ],
+  },
+  {
+    id: "pathfinding-visualizer",
+    title: "Pathfinding Visualizer",
+    difficulty: "Advanced",
+    levelId: 5,
+    blurb: "Visualize BFS, DFS, and Dijkstra finding a path across a grid with walls.",
+    skills: ["Graphs", "BFS/DFS", "Dijkstra", "Visualization"],
+    requirements: [
+      "Build a grid graph with draggable walls.",
+      "Animate BFS, DFS, and Dijkstra.",
+      "Highlight the shortest path found.",
+      "Report nodes visited per algorithm.",
+    ],
+  },
+  {
+    id: "in-memory-cache",
+    title: "LRU Cache Engine",
+    difficulty: "Advanced",
+    levelId: 8,
+    blurb: "Build an O(1) LRU cache combining a hash map with a doubly linked list.",
+    skills: ["Caching", "Hash maps", "Linked lists", "Systems"],
+    requirements: [
+      "Support get and put in O(1).",
+      "Evict the least-recently-used item at capacity.",
+      "Combine a hash map with a doubly linked list.",
+      "Expose hit/miss metrics.",
+    ],
+  },
+  {
+    id: "paper-reproduction",
+    title: "Paper Reproduction Lab",
+    difficulty: "Advanced",
+    levelId: 9,
+    blurb: "Pick a classic algorithms paper and reproduce its core result with benchmarks.",
+    skills: ["Research", "Implementation", "Benchmarking", "Writing"],
+    requirements: [
+      "Summarize the paper's claim and method.",
+      "Implement the core algorithm faithfully.",
+      "Reproduce a key experiment with measurements.",
+      "Write a short reproduction report.",
     ],
   },
 ];
