@@ -53,7 +53,7 @@ npm run build && npm start   # production build
 | Route | Purpose |
 | --- | --- |
 | `/` | Dashboard — agent status, today's mission, task queue, quick access, system feed |
-| `/curriculum` | Curriculum map across Levels 0–8 with lock/active/complete states |
+| `/curriculum` | Curriculum map across Levels 0–9 with lock/active/complete states, deep-dive markers, per-level quizzes, and mastery checkpoints |
 | `/learn` | Lesson viewer — modules · content · autosaving notes |
 | `/build` | Challenge mode — prompt · code editor · simulated test runner |
 | `/diagnostics` | Diagnostics lab — paste an error, get real AI triage |
@@ -63,18 +63,51 @@ npm run build && npm start   # production build
 | `/research` | Research lab — foundational papers by category |
 | `/projects` | Applied build missions with requirement specs |
 
+## Curriculum
+
+CS LAB is a full computer-science academy, not a JavaScript tutorial. The track
+runs from **Level 0 (Computer Literacy)** to **Level 9 (Research / Doctorate
+Track)**:
+
+| Level | Title |
+| --- | --- |
+| 0 | Computer Literacy |
+| 1 | JavaScript Foundations |
+| 2 | Programming Logic |
+| 3 | Big O & Complexity |
+| 4 | Data Structures |
+| 5 | Algorithms |
+| 6 | Software Engineering |
+| 7 | Computer Science Core |
+| 8 | Advanced Systems |
+| 9 | Research / Doctorate Track |
+
+Eleven core topics carry full **7-part deep dives** (beginner explanation,
+technical explanation, JavaScript example, real-world use case, common mistakes,
+practice challenge, project connection): **Big O Notation, Arrays, Hash Maps,
+Stacks, Queues, Linked Lists, Trees, Graphs, Recursion, Binary Search, and
+Sorting Algorithms** (`lib/data/deepContent.ts`).
+
+Every level ships with **lessons, challenges, projects, a quiz, troubleshooting
+cases, and a mastery checkpoint** (all lessons complete + quiz passed +
+a challenge solved). Locked levels remain explorable in preview so the full path
+is visible from day one.
+
 ## Architecture
 
 Pages never touch `localStorage` directly. All persistence flows through
 services in `lib/services/`:
 
 - `lessonService.ts` · `progressService.ts` · `journalService.ts`
-- `challengeService.ts` · `diagnosticsService.ts` · `aiService.ts`
+- `challengeService.ts` · `diagnosticsService.ts` · `quizService.ts` · `aiService.ts`
 - `storage.ts` — the single low-level localStorage wrapper
 
-Content lives in `lib/data/`. Server-only AI logic lives in `lib/server/`.
+Content lives in `lib/data/` (`curriculum.ts`, `deepContent.ts`, `challenges.ts`,
+`quizzes.ts`, `projects.ts`, `research.ts`, `troubleshooting.ts`). Server-only AI
+logic lives in `lib/server/`.
 
 ### localStorage keys
 
 `cs_lab_completed_lessons`, `cs_lab_notes`, `cs_lab_challenges`,
-`cs_lab_debug_sessions`, `cs_lab_progress`, `cs_lab_chat_history`.
+`cs_lab_debug_sessions`, `cs_lab_progress`, `cs_lab_chat_history`,
+`cs_lab_quizzes`.

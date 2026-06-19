@@ -14,6 +14,7 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     id: "module-not-found",
     title: "Module Not Found",
     category: "Node / NPM",
+    levelId: 6,
     whatHappened:
       "The runtime tried to import a package or file that it could not resolve on disk.",
     symptoms: [
@@ -36,6 +37,7 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     id: "cannot-get",
     title: "Cannot GET /",
     category: "Node / NPM",
+    levelId: 6,
     whatHappened:
       "The server received a request for a route it has no handler for, so it returned a default 404.",
     symptoms: [
@@ -58,6 +60,7 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     id: "cors-error",
     title: "CORS Error",
     category: "Browser / CORS",
+    levelId: 6,
     whatHappened:
       "The browser blocked a cross-origin request because the server did not return permissive CORS headers.",
     symptoms: [
@@ -80,6 +83,7 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     id: "git-push-rejected",
     title: "Git Push Rejected",
     category: "Git",
+    levelId: 0,
     whatHappened:
       "The remote refused your push because your local branch is behind the remote's history.",
     symptoms: [
@@ -102,6 +106,7 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     id: "build-failed",
     title: "Build Failed",
     category: "Vercel / Deploy",
+    levelId: 6,
     whatHappened:
       "The production build step exited with a non-zero status, so deployment was aborted.",
     symptoms: [
@@ -124,6 +129,7 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     id: "undefined-function",
     title: "Undefined Function",
     category: "JavaScript",
+    levelId: 1,
     whatHappened:
       "Code tried to call something that is not a function at the moment of the call.",
     symptoms: [
@@ -146,6 +152,7 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     id: "missing-env",
     title: "Missing Env Variable",
     category: "Vercel / Deploy",
+    levelId: 6,
     whatHappened:
       "Code read an environment variable that was undefined at runtime, producing downstream errors.",
     symptoms: [
@@ -168,6 +175,7 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     id: "npm-install-failed",
     title: "NPM Install Failed",
     category: "Node / NPM",
+    levelId: 6,
     whatHappened:
       "Dependency installation aborted due to a resolution conflict, network failure, or platform mismatch.",
     symptoms: [
@@ -185,6 +193,167 @@ export const TROUBLESHOOTING_CASES: TroubleshootingCase[] = [
     fix: "Resolve the version conflict (align peer deps), or run `rm -rf node_modules package-lock.json && npm cache clean --force && npm install`.",
     prevention:
       "Pin a Node version with an .nvmrc / engines field, commit the lockfile, and keep dependencies updated incrementally.",
+  },
+  {
+    id: "max-call-stack",
+    title: "Maximum Call Stack Size Exceeded",
+    category: "JavaScript",
+    levelId: 2,
+    whatHappened:
+      "A recursion (or mutual recursion) never reached its base case, so frames piled up until the call stack overflowed.",
+    symptoms: [
+      "RangeError: Maximum call stack size exceeded.",
+      "A function that calls itself with no progress toward termination.",
+      "Crash that grows with input size.",
+    ],
+    rootCause:
+      "A missing, unreachable, or non-shrinking base case — each recursive call fails to reduce the problem.",
+    diagnosis: [
+      "Locate the recursive function in the stack trace.",
+      "Verify a base case exists and is actually reachable.",
+      "Confirm every recursive call moves the argument toward the base case.",
+    ],
+    fix: "Add or fix the base case so recursion terminates; for deep linear recursion, convert to iteration or use an explicit stack.",
+    prevention:
+      "Always write the base case first, and add a guard/assertion that the input strictly shrinks each call.",
+  },
+  {
+    id: "quadratic-slowdown",
+    title: "Sudden Quadratic Slowdown",
+    category: "JavaScript",
+    levelId: 3,
+    whatHappened:
+      "Code that was fast on small inputs became unusably slow at scale because its complexity is O(n²).",
+    symptoms: [
+      "Runtime explodes as the dataset grows (10x data → ~100x time).",
+      "Nested loops over the same collection.",
+      "UI freeze / request timeout on large inputs.",
+    ],
+    rootCause:
+      "An O(n²) algorithm (e.g., a nested scan, or repeated array.includes inside a loop) where an O(n) approach exists.",
+    diagnosis: [
+      "Identify nested iteration over the same data.",
+      "Estimate the Big O class by counting loops.",
+      "Check for O(n) operations (includes/indexOf) inside an O(n) loop.",
+    ],
+    fix: "Replace the inner scan with a hash map or Set lookup to drop from O(n²) to O(n).",
+    prevention:
+      "Reason about Big O before shipping; add a performance test on a realistically large input.",
+  },
+  {
+    id: "off-by-one-index",
+    title: "Index Out of Range / Undefined Element",
+    category: "JavaScript",
+    levelId: 4,
+    whatHappened:
+      "An array was accessed at an invalid index, yielding undefined and a downstream crash.",
+    symptoms: [
+      "Reading a property of undefined after an array access.",
+      "Loop runs one time too many or too few.",
+      "Last or first element is skipped or duplicated.",
+    ],
+    rootCause:
+      "An off-by-one error: using <= instead of <, or assuming the last index is length rather than length - 1.",
+    diagnosis: [
+      "Print the index and array length at the boundary.",
+      "Re-check loop bounds and termination condition.",
+      "Confirm whether the structure is 0-indexed (arrays) as expected.",
+    ],
+    fix: "Correct the loop bound (length - 1 for the last valid index) and guard accesses that may be undefined.",
+    prevention:
+      "Prefer for...of / map over manual index loops, and add tests for empty and single-element inputs.",
+  },
+  {
+    id: "unsorted-binary-search",
+    title: "Binary Search Returns Wrong Result",
+    category: "JavaScript",
+    levelId: 5,
+    whatHappened:
+      "Binary search returned -1 or an incorrect index even though the value was present.",
+    symptoms: [
+      "Correct on some inputs, wrong on others.",
+      "Returns -1 for values that exist.",
+      "No error thrown — just wrong answers.",
+    ],
+    rootCause:
+      "The input array was not sorted (binary search's precondition), or an off-by-one in the bound updates.",
+    diagnosis: [
+      "Assert the array is sorted before searching.",
+      "Log low, high, and mid each iteration.",
+      "Check that bounds move past mid (mid ± 1).",
+    ],
+    fix: "Sort the array first (or maintain it sorted), and fix the low/high update so the loop always shrinks.",
+    prevention:
+      "Encapsulate the sorted invariant in the data structure, and unit-test search on edge positions.",
+  },
+  {
+    id: "n-plus-one-queries",
+    title: "N+1 Query Problem",
+    category: "Node / NPM",
+    levelId: 7,
+    whatHappened:
+      "Loading a list issued one query per item instead of a single batched query, hammering the database.",
+    symptoms: [
+      "Hundreds of near-identical queries in the logs for one page.",
+      "Latency scales linearly with list length.",
+      "Database CPU spikes under light traffic.",
+    ],
+    rootCause:
+      "Lazy-loading a relation inside a loop, producing 1 query for the list plus N for each row's relation.",
+    diagnosis: [
+      "Count the queries per request in the DB log.",
+      "Find the loop that triggers a query per iteration.",
+      "Confirm the relation could be fetched in one join/batch.",
+    ],
+    fix: "Eager-load or batch the relation (a single JOIN or an IN query) so the page costs a constant number of queries.",
+    prevention:
+      "Watch query counts in development, use dataloaders/eager loading, and add a query-count assertion in tests.",
+  },
+  {
+    id: "thundering-herd",
+    title: "Cache Stampede / Thundering Herd",
+    category: "Vercel / Deploy",
+    levelId: 8,
+    whatHappened:
+      "A popular cache key expired and thousands of requests simultaneously hit the origin to rebuild it.",
+    symptoms: [
+      "Periodic origin/database load spikes aligned with cache TTL.",
+      "Latency cliffs every few minutes.",
+      "Origin overload despite a high cache hit rate normally.",
+    ],
+    rootCause:
+      "Many clients miss the cache at the same instant and all recompute the same expensive value (no coordination).",
+    diagnosis: [
+      "Correlate load spikes with cache TTL expiry.",
+      "Check whether misses cluster in time.",
+      "Confirm there is no single-flight / lock around recomputation.",
+    ],
+    fix: "Add request coalescing (single-flight), stagger TTLs with jitter, and serve stale-while-revalidate.",
+    prevention:
+      "Use jittered expiries, background refresh, and a lock so only one worker rebuilds a hot key.",
+  },
+  {
+    id: "irreproducible-result",
+    title: "Irreproducible Research Result",
+    category: "JavaScript",
+    levelId: 9,
+    whatHappened:
+      "An experiment produced different numbers on each run, undermining a claimed result.",
+    symptoms: [
+      "Metrics vary run to run with the same code.",
+      "Reported figures cannot be regenerated.",
+      "Reviewers cannot reproduce the headline number.",
+    ],
+    rootCause:
+      "Uncontrolled randomness, unpinned dependencies/data versions, or undocumented hyperparameters.",
+    diagnosis: [
+      "Check for an unset random seed.",
+      "Verify dataset and dependency versions are pinned.",
+      "Confirm every parameter is recorded with the result.",
+    ],
+    fix: "Fix and log the random seed, pin data + dependency versions, and record the full experiment configuration.",
+    prevention:
+      "Script experiments end-to-end, log seeds and versions, and store configs alongside results for reproducibility.",
   },
 ];
 

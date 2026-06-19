@@ -1,7 +1,11 @@
 import { ALL_LESSONS, CURRICULUM, getLessonById } from "@/lib/data/curriculum";
-import type { Lesson, Level, LessonStatus } from "@/lib/types";
+import { CHALLENGES } from "@/lib/data/challenges";
+import { QUIZZES } from "@/lib/data/quizzes";
+import type { Lesson, Level, LessonStatus, LevelMastery } from "@/lib/types";
 import { STORAGE_KEYS, readJSON, writeJSON } from "./storage";
 import { progressService } from "./progressService";
+import { challengeService } from "./challengeService";
+import { quizService } from "./quizService";
 
 const LESSON_XP = 60;
 
@@ -71,6 +75,36 @@ export const lessonService = {
     if (!level) return { completed: 0, total: 0 };
     const completed = level.lessons.filter((l) => this.isCompleted(l.id)).length;
     return { completed, total: level.lessons.length };
+  },
+
+  /**
+   * A level's mastery checkpoint is cleared when all lessons are complete, the
+   * level quiz is passed, and (if the level has challenges) at least one is
+   * solved. Levels without challenges treat the challenge gate as satisfied.
+   */
+  getLevelMastery(levelId: number): LevelMastery {
+    const { completed, total } = this.getLevelProgress(levelId);
+    const lessonsComplete = total > 0 && completed === total;
+
+    const hasQuiz = QUIZZES.some((q) => q.levelId === levelId);
+    const quizPassed = hasQuiz ? quizService.isPassed(levelId) : true;
+
+    const levelChallenges = CHALLENGES.filter((c) => c.levelId === levelId);
+    const solved = new Set(
+      challengeService.getAttempts().filter((a) => a.success).map((a) => a.challengeId),
+    );
+    const challengeSolved =
+      levelChallenges.length === 0 || levelChallenges.some((c) => solved.has(c.id));
+
+    return {
+      levelId,
+      lessonsComplete,
+      lessonsDone: completed,
+      lessonsTotal: total,
+      quizPassed,
+      challengeSolved,
+      mastered: lessonsComplete && quizPassed && challengeSolved,
+    };
   },
 
   /** The recommended next lesson to surface as "today's mission". */

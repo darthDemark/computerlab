@@ -6,9 +6,35 @@ import { lessonService } from "@/lib/services/lessonService";
 import { progressService, XP_PER_LEVEL } from "@/lib/services/progressService";
 import { challengeService } from "@/lib/services/challengeService";
 import { diagnosticsService } from "@/lib/services/diagnosticsService";
+import { CURRICULUM } from "@/lib/data/curriculum";
 import { NAV_ITEMS } from "@/components/nav";
-import { IconArrowRight, IconBolt } from "@/components/icons";
+import { IconArrowRight, IconBolt, IconLock, IconCheck } from "@/components/icons";
 import type { FeedEvent } from "@/lib/types";
+
+interface TrackLevel {
+  id: number;
+  code: string;
+  title: string;
+  completed: number;
+  total: number;
+  unlocked: boolean;
+  mastered: boolean;
+}
+
+function readTrack(): TrackLevel[] {
+  return CURRICULUM.map((level) => {
+    const prog = lessonService.getLevelProgress(level.id);
+    return {
+      id: level.id,
+      code: level.code,
+      title: level.title,
+      completed: prog.completed,
+      total: prog.total,
+      unlocked: lessonService.isLevelUnlocked(level.id),
+      mastered: lessonService.getLevelMastery(level.id).mastered,
+    };
+  });
+}
 
 function timeAgo(ts: number): string {
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -24,6 +50,7 @@ const FEED_COLOR: Record<FeedEvent["type"], string> = {
   lesson: "var(--color-cyan)",
   challenge: "var(--color-success)",
   diagnostic: "var(--color-warning)",
+  quiz: "var(--color-cyansoft)",
   system: "var(--color-muted)",
 };
 
@@ -38,6 +65,7 @@ export default function DashboardPage() {
   const [diagCount] = useClientData(() => diagnosticsService.sessionCount(), 0);
   const [feed] = useClientData<FeedEvent[]>(() => progressService.getFeed(), []);
   const [nextLesson] = useClientData(() => lessonService.getNextLesson(), undefined);
+  const [track] = useClientData<TrackLevel[]>(readTrack, readTrack());
 
   const level = progressService.level(progress.xp);
   const levelProgress = progressService.levelProgress(progress.xp);
@@ -139,6 +167,56 @@ export default function DashboardPage() {
             <QueueItem done={attempts > 0} label="Attempt a challenge" href="/build" />
             <QueueItem done={diagCount > 0} label="Run diagnostics" href="/diagnostics" />
             <QueueItem done={progress.streak >= 2} label="Maintain a 2-day streak" href="/progress" />
+          </div>
+        </Panel>
+      </div>
+
+      {/* Mastery track — the full CS path */}
+      <div className="mt-4">
+        <Panel
+          heading="Mastery Track · 0 → Doctorate"
+          right={
+            <Link href="/curriculum" className="t-meta" style={{ color: "var(--color-cyan)" }}>
+              Open Map →
+            </Link>
+          }
+        >
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+            {track.map((lvl) => {
+              const pct = lvl.total ? Math.round((lvl.completed / lvl.total) * 100) : 0;
+              const active = nextLesson?.levelId === lvl.id;
+              return (
+                <Link
+                  key={lvl.id}
+                  href="/curriculum"
+                  className="panel-2 p-3"
+                  style={{
+                    borderRadius: 6,
+                    borderColor: active ? "var(--color-cyan)" : lvl.mastered ? "rgba(0,255,178,0.4)" : "var(--line)",
+                    boxShadow: active ? "var(--glow)" : "none",
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="t-code" style={{ fontSize: 12, fontWeight: 700, color: lvl.unlocked ? "var(--color-cyan)" : "var(--color-muted)" }}>
+                      {lvl.code}
+                    </span>
+                    {lvl.mastered ? (
+                      <IconCheck width={13} height={13} style={{ color: "var(--color-success)" }} />
+                    ) : !lvl.unlocked ? (
+                      <IconLock width={11} height={11} style={{ color: "var(--color-muted)" }} />
+                    ) : (
+                      <span className="t-code" style={{ fontSize: 10, color: "var(--color-text2)" }}>{pct}%</span>
+                    )}
+                  </div>
+                  <div className="t-meta mt-1.5 truncate" style={{ color: "var(--color-text)", letterSpacing: "0.04em" }}>
+                    {lvl.title}
+                  </div>
+                  <div className="mt-2">
+                    <ProgressBar value={lvl.total ? lvl.completed / lvl.total : 0} />
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </Panel>
       </div>

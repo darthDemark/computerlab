@@ -15,6 +15,7 @@ const DIFF_TONE: Record<Project["difficulty"], "success" | "warning" | "error"> 
 
 export default function ProjectsPage() {
   const [active, setActive] = useState<Project | null>(null);
+  const projects = [...PROJECTS].sort((a, b) => a.levelId - b.levelId);
 
   return (
     <div>
@@ -26,14 +27,17 @@ export default function ProjectsPage() {
 
       <div className="px-5 py-5 md:px-8 md:py-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PROJECTS.map((p) => (
+          {projects.map((p) => (
             <Panel key={p.id} className="h-full">
               <div className="flex h-full flex-col">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="t-card-title" style={{ color: "var(--color-text)" }}>
                     {p.title}
                   </h3>
-                  <Tag tone={DIFF_TONE[p.difficulty]}>{p.difficulty}</Tag>
+                  <div className="flex items-center gap-1.5">
+                    <Tag>L{p.levelId}</Tag>
+                    <Tag tone={DIFF_TONE[p.difficulty]}>{p.difficulty}</Tag>
+                  </div>
                 </div>
                 <p className="t-secondary mt-2" style={{ color: "var(--color-text2)" }}>
                   {p.blurb}

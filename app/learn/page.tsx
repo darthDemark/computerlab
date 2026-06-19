@@ -5,11 +5,73 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Markdown } from "@/components/Markdown";
 import { useClientData } from "@/components/ui";
+import { LevelQuiz } from "@/components/LevelQuiz";
 import { CURRICULUM, getLessonById } from "@/lib/data/curriculum";
 import { lessonService } from "@/lib/services/lessonService";
 import { journalService } from "@/lib/services/journalService";
+import { quizService } from "@/lib/services/quizService";
 import { IconCheck, IconLock, IconArrowRight } from "@/components/icons";
-import type { Lesson } from "@/lib/types";
+import type { Lesson, LessonSections } from "@/lib/types";
+
+const SECTION_META: { key: keyof LessonSections; label: string; tone: string }[] = [
+  { key: "beginner", label: "Beginner Explanation", tone: "var(--color-cyansoft)" },
+  { key: "technical", label: "Technical Explanation", tone: "var(--color-cyan)" },
+  { key: "realWorld", label: "Real-World Use Case", tone: "var(--color-success)" },
+  { key: "projectConnection", label: "Project Connection", tone: "var(--color-warning)" },
+];
+
+function SevenPart({ sections }: { sections: LessonSections }) {
+  return (
+    <div className="space-y-5">
+      {SECTION_META.map(({ key, label, tone }) => (
+        <section key={key}>
+          <div className="t-panel-heading mb-2" style={{ color: tone }}>
+            {label}
+          </div>
+          <Markdown content={sections[key] as string} />
+        </section>
+      ))}
+
+      <section>
+        <div className="t-panel-heading mb-2" style={{ color: "var(--color-cyan)" }}>
+          JavaScript Example
+        </div>
+        <pre
+          className="t-code overflow-x-auto rounded p-4"
+          style={{ background: "var(--color-bg2)", border: "1px solid var(--line)", color: "var(--color-text)", fontSize: 12.5, lineHeight: 1.6 }}
+        >
+          {sections.jsExample}
+        </pre>
+      </section>
+
+      <section>
+        <div className="t-panel-heading mb-2" style={{ color: "var(--color-error)" }}>
+          Common Mistakes
+        </div>
+        <ul className="space-y-1.5">
+          {sections.commonMistakes.map((m, i) => (
+            <li key={i} className="t-secondary flex gap-2.5" style={{ color: "var(--color-text)" }}>
+              <span style={{ color: "var(--color-error)" }}>›</span>
+              {m}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="panel-2 p-4" style={{ borderRadius: 6 }}>
+        <div className="t-panel-heading mb-2" style={{ color: "var(--color-cyan)" }}>
+          Practice Challenge
+        </div>
+        <p className="t-secondary" style={{ color: "var(--color-text)" }}>
+          {sections.practiceChallenge}
+        </p>
+        <Link href="/build" className="btn btn-secondary btn-sm mt-3">
+          Open Challenge Mode
+        </Link>
+      </section>
+    </div>
+  );
+}
 
 function LessonViewer() {
   const router = useRouter();
@@ -22,6 +84,8 @@ function LessonViewer() {
     () => lessonService.getCompleted(),
     [],
   );
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [quizPassedTick, setQuizPassedTick] = useState(0);
 
   const activeLesson: Lesson | undefined = useMemo(() => {
     if (requestedId) return getLessonById(requestedId);
@@ -38,7 +102,12 @@ function LessonViewer() {
   const isDone = completed.includes(activeLesson.id);
   const idx = flatLessons.findIndex((l) => l.id === activeLesson.id);
   const nextLesson = flatLessons[idx + 1];
-  const nextUnlocked = nextLesson ? lessonService.isLevelUnlocked(nextLesson.levelId) : false;
+
+  // mastery recomputed when completion or quiz state changes
+  void completed;
+  void quizPassedTick;
+  const mastery = lessonService.getLevelMastery(activeLesson.levelId);
+  const quizPassed = quizService.isPassed(activeLesson.levelId);
 
   const handleComplete = () => {
     lessonService.complete(activeLesson.id);
@@ -46,7 +115,7 @@ function LessonViewer() {
   };
 
   const goNext = () => {
-    if (nextLesson && nextUnlocked) router.push(`/learn?lesson=${nextLesson.id}`);
+    if (nextLesson) router.push(`/learn?lesson=${nextLesson.id}`);
   };
 
   return (
@@ -92,7 +161,7 @@ function LessonViewer() {
                         style={{
                           background: active ? "rgba(0,229,255,0.06)" : "transparent",
                           border: active ? "1px solid var(--line)" : "1px solid transparent",
-                          cursor: locked ? "not-allowed" : "pointer",
+                          cursor: "pointer",
                         }}
                       >
                         <span style={{ flexShrink: 0, color: done ? "var(--color-success)" : locked ? "var(--color-muted)" : "var(--color-cyan)" }}>
@@ -115,9 +184,7 @@ function LessonViewer() {
                         </span>
                       </div>
                     );
-                    return locked ? (
-                      <div key={lesson.id}>{inner}</div>
-                    ) : (
+                    return (
                       <Link key={lesson.id} href={`/learn?lesson=${lesson.id}`}>
                         {inner}
                       </Link>
@@ -140,11 +207,30 @@ function LessonViewer() {
             )}
           </div>
           <div className="max-h-[calc(100vh-220px)] overflow-y-auto p-5 md:p-7">
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {activeLesson.sections && (
+                <span className="tag" style={{ color: "var(--color-cyansoft)", borderColor: "var(--line)" }}>
+                  Deep Dive · 7-Part
+                </span>
+              )}
+              {activeLesson.complexity && (
+                <span className="tag t-code" style={{ color: "var(--color-warning)", borderColor: "var(--line)", textTransform: "none", letterSpacing: 0 }}>
+                  {activeLesson.complexity}
+                </span>
+              )}
+            </div>
+
             <p className="t-secondary mb-5" style={{ color: "var(--color-text2)" }}>
               {activeLesson.summary}
             </p>
 
             <Markdown content={activeLesson.body} />
+
+            {activeLesson.sections && (
+              <div className="mt-6">
+                <SevenPart sections={activeLesson.sections} />
+              </div>
+            )}
 
             {activeLesson.diagram && (
               <div className="mt-5">
@@ -195,13 +281,40 @@ function LessonViewer() {
               <button
                 className="btn btn-secondary"
                 onClick={goNext}
-                disabled={!nextLesson || !nextUnlocked}
+                disabled={!nextLesson}
               >
                 Next Lesson <IconArrowRight width={14} height={14} />
               </button>
-              <Link href="/ai-tutor" className="btn btn-secondary" style={{ marginLeft: "auto" }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setQuizOpen(true)}
+                style={{ marginLeft: "auto" }}
+              >
+                {quizPassed ? "Quiz Passed ✓" : "Level Quiz"}
+              </button>
+              <Link href="/ai-tutor" className="btn btn-secondary">
                 Ask ARCHITECT
               </Link>
+            </div>
+
+            {/* Mastery checkpoint status for this level */}
+            <div className="mt-4 panel-2 p-4" style={{ borderRadius: 6 }}>
+              <div className="t-panel-heading mb-3" style={{ color: "var(--color-cyan)" }}>
+                Level {activeLesson.levelId} Mastery Checkpoint
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <MasteryItem
+                  done={mastery.lessonsComplete}
+                  label={`Lessons ${mastery.lessonsDone}/${mastery.lessonsTotal}`}
+                />
+                <MasteryItem done={mastery.quizPassed} label="Quiz passed" />
+                <MasteryItem done={mastery.challengeSolved} label="Challenge solved" />
+              </div>
+              {mastery.mastered && (
+                <div className="t-meta mt-3" style={{ color: "var(--color-success)" }}>
+                  ✓ Level mastered — checkpoint cleared
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -209,6 +322,38 @@ function LessonViewer() {
         {/* Notes — keyed by lesson so state resets cleanly per lesson */}
         <NotesPanel key={activeLesson.id} lessonId={activeLesson.id} />
       </div>
+
+      {quizOpen && (
+        <LevelQuiz
+          levelId={activeLesson.levelId}
+          onClose={() => setQuizOpen(false)}
+          onComplete={() => setQuizPassedTick((t) => t + 1)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MasteryItem({ done, label }: { done: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className="grid place-items-center"
+        style={{
+          width: 16,
+          height: 16,
+          borderRadius: 4,
+          flexShrink: 0,
+          border: `1px solid ${done ? "var(--color-success)" : "var(--line)"}`,
+          background: done ? "var(--color-success)" : "transparent",
+          color: "#03060a",
+        }}
+      >
+        {done && <IconCheck width={10} height={10} />}
+      </span>
+      <span className="t-secondary" style={{ color: done ? "var(--color-text)" : "var(--color-text2)" }}>
+        {label}
+      </span>
     </div>
   );
 }

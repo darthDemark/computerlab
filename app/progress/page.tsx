@@ -6,6 +6,7 @@ import { challengeService } from "@/lib/services/challengeService";
 import { diagnosticsService } from "@/lib/services/diagnosticsService";
 import { progressService } from "@/lib/services/progressService";
 import { journalService } from "@/lib/services/journalService";
+import { quizService } from "@/lib/services/quizService";
 import { CHALLENGES } from "@/lib/data/challenges";
 import { CURRICULUM, ALL_LESSONS } from "@/lib/data/curriculum";
 import { clearAll } from "@/lib/services/storage";
@@ -20,7 +21,10 @@ interface Snapshot {
   diagnostics: number;
   notes: number;
   casesReviewed: number;
-  levelProgress: { id: number; title: string; completed: number; total: number }[];
+  quizzesPassed: number;
+  quizzesTotal: number;
+  levelsMastered: number;
+  levelProgress: { id: number; title: string; completed: number; total: number; mastered: boolean }[];
 }
 
 function readSnapshot(): Snapshot {
@@ -33,9 +37,18 @@ function readSnapshot(): Snapshot {
     diagnostics: diagnosticsService.sessionCount(),
     notes: journalService.countNotes(),
     casesReviewed: diagnosticsService.reviewedCount(),
+    quizzesPassed: quizService.passedCount(),
+    quizzesTotal: quizService.totalQuizzes(),
+    levelsMastered: CURRICULUM.filter((l) => lessonService.getLevelMastery(l.id).mastered).length,
     levelProgress: CURRICULUM.map((l) => {
       const p = lessonService.getLevelProgress(l.id);
-      return { id: l.id, title: l.title, completed: p.completed, total: p.total };
+      return {
+        id: l.id,
+        title: l.title,
+        completed: p.completed,
+        total: p.total,
+        mastered: lessonService.getLevelMastery(l.id).mastered,
+      };
     }),
   };
 }
@@ -50,29 +63,42 @@ export default function ProgressPage() {
     diagnostics: 0,
     notes: 0,
     casesReviewed: 0,
-    levelProgress: CURRICULUM.map((l) => ({ id: l.id, title: l.title, completed: 0, total: l.lessons.length })),
+    quizzesPassed: 0,
+    quizzesTotal: quizService.totalQuizzes(),
+    levelsMastered: 0,
+    levelProgress: CURRICULUM.map((l) => ({
+      id: l.id,
+      title: l.title,
+      completed: 0,
+      total: l.lessons.length,
+      mastered: false,
+    })),
   });
 
   const level = progressService.level(snap.xp);
   const totalLessons = ALL_LESSONS.length;
 
-  // Mastery = weighted blend of lessons, challenges, and diagnostics activity.
+  // Mastery = weighted blend of lessons, challenges, quizzes, and diagnostics.
   const mastery = Math.min(
     100,
     Math.round(
-      (snap.lessonsCompleted / totalLessons) * 60 +
-        (snap.challengesSolved / CHALLENGES.length) * 30 +
-        Math.min(snap.diagnostics, 5) * 2,
+      (snap.lessonsCompleted / totalLessons) * 50 +
+        (snap.challengesSolved / CHALLENGES.length) * 25 +
+        (snap.quizzesPassed / snap.quizzesTotal) * 20 +
+        Math.min(snap.diagnostics, 5),
     ),
   );
 
   const achievements = [
     { id: "first-lesson", label: "First Steps", desc: "Complete your first lesson", unlocked: snap.lessonsCompleted >= 1 },
-    { id: "level0", label: "Computer Literate", desc: "Finish Level 0", unlocked: (snap.levelProgress[0]?.completed ?? 0) === (snap.levelProgress[0]?.total ?? 1) },
+    { id: "level0", label: "Computer Literate", desc: "Master Level 0", unlocked: snap.levelProgress[0]?.mastered ?? false },
     { id: "first-challenge", label: "Code Runner", desc: "Solve a challenge", unlocked: snap.challengesSolved >= 1 },
+    { id: "quiz", label: "Checkpoint Cleared", desc: "Pass a level quiz", unlocked: snap.quizzesPassed >= 1 },
     { id: "debugger", label: "Field Diagnostician", desc: "Run 3 diagnostics", unlocked: snap.diagnostics >= 3 },
     { id: "streak", label: "Consistent Operator", desc: "Reach a 2-day streak", unlocked: snap.streak >= 2 },
     { id: "scholar", label: "Scholar", desc: "Write notes on 3 lessons", unlocked: snap.notes >= 3 },
+    { id: "ds-master", label: "Data Structures Master", desc: "Master Level 4", unlocked: snap.levelProgress[4]?.mastered ?? false },
+    { id: "algo-master", label: "Algorithmist", desc: "Master Level 5", unlocked: snap.levelProgress[5]?.mastered ?? false },
   ];
 
   return (
@@ -97,9 +123,10 @@ export default function ProgressPage() {
       />
 
       <div className="px-5 py-5 md:px-8 md:py-6 space-y-4">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
           <Stat label="Mastery Score" value={`${mastery}%`} tone="cyan" />
           <Stat label="Current Level" value={`L${level}`} tone="success" />
+          <Stat label="Levels Mastered" value={`${snap.levelsMastered}/10`} tone="cyan" />
           <Stat label="Total XP" value={snap.xp} tone="text" />
           <Stat label="Day Streak" value={`${snap.streak}d`} tone="warning" />
         </div>
@@ -109,9 +136,9 @@ export default function ProgressPage() {
             <div className="space-y-3.5">
               <Row label="Lessons completed" value={`${snap.lessonsCompleted} / ${totalLessons}`} ratio={snap.lessonsCompleted / totalLessons} />
               <Row label="Challenges solved" value={`${snap.challengesSolved} / ${CHALLENGES.length}`} ratio={snap.challengesSolved / CHALLENGES.length} />
+              <Row label="Quizzes passed" value={`${snap.quizzesPassed} / ${snap.quizzesTotal}`} ratio={snap.quizzesTotal ? snap.quizzesPassed / snap.quizzesTotal : 0} />
               <Row label="Challenges attempted" value={`${snap.challengesAttempted}`} ratio={Math.min(1, snap.challengesAttempted / 10)} />
               <Row label="Diagnostics reviewed" value={`${snap.diagnostics}`} ratio={Math.min(1, snap.diagnostics / 10)} />
-              <Row label="Cases reviewed" value={`${snap.casesReviewed} / 8`} ratio={snap.casesReviewed / 8} />
               <Row label="Lesson notes" value={`${snap.notes}`} ratio={Math.min(1, snap.notes / 8)} />
             </div>
           </Panel>
@@ -123,6 +150,7 @@ export default function ProgressPage() {
                   <div className="mb-1 flex justify-between">
                     <span className="t-secondary" style={{ color: "var(--color-text)" }}>
                       L{lp.id} · {lp.title}
+                      {lp.mastered && <span style={{ color: "var(--color-success)" }}> ✓</span>}
                     </span>
                     <span className="t-code" style={{ fontSize: 11, color: "var(--color-text2)" }}>
                       {lp.completed}/{lp.total}

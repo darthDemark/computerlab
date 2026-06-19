@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   chatHistory: "cs_lab_chat_history",
   feed: "cs_lab_feed",
   reviewedCases: "cs_lab_reviewed_cases",
+  quizzes: "cs_lab_quizzes",
 } as const;
 
 const isBrowser = (): boolean => typeof window !== "undefined";
